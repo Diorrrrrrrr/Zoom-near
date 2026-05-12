@@ -1,0 +1,162 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  api-test:
+    name: API Test (Java 21)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: zoomnear
+          POSTGRES_USER: zoomnear
+          POSTGRES_PASSWORD: zoomnear
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: gradle
+
+      - name: Run check (test + lint)
+        working-directory: api
+        run: ./gradlew check
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/zoomnear
+          SPRING_DATASOURCE_USERNAME: zoomnear
+          SPRING_DATASOURCE_PASSWORD: zoomnear
+
+  app-test:
+    name: App Test (Flutter)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check app directory
+        id: check_app
+        run: |
+          if [ -d app ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Flutter
+        if: steps.check_app.outputs.exists == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Flutter pub get
+        if: steps.check_app.outputs.exists == 'true'
+        working-directory: app
+        run: flutter pub get
+
+      - name: Flutter analyze
+        if: steps.check_app.outputs.exists == 'true'
+        working-directory: app
+        run: flutter analyze
+
+      - name: Flutter test
+        if: steps.check_app.outputs.exists == 'true'
+        working-directory: app
+        run: flutter test
+
+      - name: Skip (app/ not found)
+        if: steps.check_app.outputs.exists == 'false'
+        run: echo "app/ directory not found — skipping Flutter tests"
+
+  admin-test:
+    name: Admin Test (Node 20)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check admin directory
+        id: check_admin
+        run: |
+          if [ -d admin ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Node 20
+        if: steps.check_admin.outputs.exists == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable pnpm
+        if: steps.check_admin.outputs.exists == 'true'
+        run: corepack enable pnpm
+
+      - name: Install dependencies
+        if: steps.check_admin.outputs.exists == 'true'
+        working-directory: admin
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        if: steps.check_admin.outputs.exists == 'true'
+        working-directory: admin
+        run: pnpm lint
+
+      - name: Build
+        if: steps.check_admin.outputs.exists == 'true'
+        working-directory: admin
+        run: pnpm build
+
+      - name: Skip (admin/ not found)
+        if: steps.check_admin.outputs.exists == 'false'
+        run: echo "admin/ directory not found — skipping admin tests"
+
+  migrations-validate:
+    name: Migrations Validate (Flyway)
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: zoomnear
+          POSTGRES_USER: zoomnear
+          POSTGRES_PASSWORD: zoomnear
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: temurin
+          cache: gradle
+
+      - name: Flyway migrate (dry-run via Gradle)
+        working-directory: api
+        run: ./gradlew flywayMigrate -Dflyway.url=jdbc:postgresql://localhost:5432/zoomnear -Dflyway.user=zoomnear -Dflyway.password=zoomnear -Dflyway.locations=classpath:db/migration
+        env:
+          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/zoomnear
+          SPRING_DATASOURCE_USERNAME: zoomnear
+          SPRING_DATASOURCE_PASSWORD: zoomnear

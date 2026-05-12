@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family:
+      "Pretendard Variable", "Pretendard", -apple-system, BlinkMacSystemFont,
+      system-ui, "Noto Sans KR", sans-serif;
+    font-feature-settings: "ss03", "cv11", "tnum";
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  h1, h2, h3, h4 {
+    letter-spacing: -0.02em;
+  }
+  body {
+    letter-spacing: -0.01em;
+  }
+  /* iOS 자동 줌 방지: 폼 컨트롤 16px 이상 */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  /* 모바일 탭 시 반투명 회색 플래시가 칩/버튼을 사라지게 보이는 현상 방지 */
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+}

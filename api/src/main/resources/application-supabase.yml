@@ -1,0 +1,53 @@
+spring:
+  datasource:
+    # SPRING_DATASOURCE_URL / USERNAME / PASSWORD 환경변수로 주입한다 (로컬·운영 모두).
+    # password 는 fallback 없음 → 미설정 시 부팅 실패하도록 의도 (커밋 노출 방지).
+    # 로컬은 IDE Run Config 또는 PowerShell `$env:SPRING_DATASOURCE_PASSWORD = "..."` 로 설정.
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://aws-1-ap-northeast-1.pooler.supabase.com:6543/postgres?sslmode=require&prepareThreshold=0}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres.oleeepnfucvlzgkemtxo}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      auto-commit: true
+      data-source-properties:
+        prepareThreshold: 0
+        preparedStatementCacheQueries: 0
+        preparedStatementCacheSizeMiB: 0
+  jpa:
+    hibernate:
+      ## Flyway가 스키마 단일 진실. validate 회피.
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+        ## PgBouncer transaction mode 호환은 datasource hikari + prepareThreshold=0 에서 처리
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    schemas: public
+
+zoomnear:
+  jwt:
+    ## 운영(Render)은 ZOOMNEAR_JWT_SECRET 환경변수 주입 필수. 로컬은 fallback.
+    secret: ${ZOOMNEAR_JWT_SECRET:dev-zoomnear-jwt-secret-please-change-in-prod-32bytes-min!!}
+    access-token-ttl-minutes: 30
+    refresh-token-ttl-days: 14
+  fcm:
+    enabled: false
+  invite:
+    base-url: https://zoomnear.kr/invite
+  cors:
+    ## CSV. 운영은 ZOOMNEAR_CORS_ALLOWED_ORIGINS 환경변수로 Vercel URL 추가.
+    ## 예: https://zoomnear.vercel.app,https://*.vercel.app,http://localhost:3000
+    allowed-origins: ${ZOOMNEAR_CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+
+logging:
+  level:
+    root: INFO
+    kr.zoomnear: DEBUG

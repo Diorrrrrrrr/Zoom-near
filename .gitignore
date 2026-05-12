@@ -1,0 +1,69 @@
+# =====================================================================
+# ZOOM NEAR — repo-wide .gitignore
+# 보안: 어떤 secret/env/log 도 깃에 올라가지 않도록 (모든 하위 폴더 포함)
+# =====================================================================
+
+# ---------- OMC (oh-my-claudecode) / Claude / IDE 메타 ----------
+**/.omc/
+**/.claude/
+**/.cursor/
+.idea/
+.vscode/
+*.iml
+
+# ---------- 환경 변수 / 비밀 ----------
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.local.example
+**/secrets.*
+**/*.key
+**/*.pem
+**/credentials*.json
+
+# ---------- 로그 ----------
+**/*.log
+**/logs/
+**/boot.log
+**/dev.log
+
+# ---------- 빌드 산출물 ----------
+# Node
+**/node_modules/
+**/.next/
+**/out/
+**/dist/
+**/build/
+**/.turbo/
+**/coverage/
+
+# Gradle / Java
+**/.gradle/
+**/target/
+**/*.class
+**/hs_err_pid*
+
+# Flutter / Dart
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/.packages
+**/pubspec.lock
+
+# ---------- Vercel / Render / CI ----------
+**/.vercel/
+**/.render/
+
+# ---------- OS / 에디터 잡파일 ----------
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ---------- 일회성/임시 리포트 ----------
+report.txt
+report-*.txt
+
+# ---------- 비공개 운영 문서 (Supabase 자격증명 표 등) ----------
+docs/DEPLOY.md
+docs/DEPLOY*.md

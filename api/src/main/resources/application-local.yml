@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/zoomnear
+    username: zoomnear
+    password: zoomnear
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ## CHAR(6) ↔ Hibernate VARCHAR expect mismatch 회피. Flyway가 단일 스키마 진실.
+      ddl-auto: none
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+    schemas: public
+
+zoomnear:
+  jwt:
+    ## 개발 전용 시크릿 — 운영 배포 시 환경변수(ZOOMNEAR_JWT_SECRET)로 반드시 교체
+    secret: dev-zoomnear-jwt-secret-please-change-in-prod-32bytes-min!!
+    access-token-ttl-minutes: 30
+    refresh-token-ttl-days: 14
+  fcm:
+    ## Day 2에 Firebase Admin SDK 연동 후 true로 변경
+    enabled: false
+  invite:
+    base-url: https://zoomnear.kr/invite
+
+logging:
+  level:
+    root: INFO
+    kr.zoomnear: DEBUG
+    org.hibernate.SQL: DEBUG

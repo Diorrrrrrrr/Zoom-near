@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: zoomnear-api
+  profiles:
+    active: supabase
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+
+server:
+  ## Render 는 PORT 환경변수로 바인딩 포트를 강제. 로컬은 8080 fallback.
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+zoomnear:
+  jwt:
+    ## 운영 배포 시 ZOOMNEAR_JWT_SECRET 환경변수 필수. 미지정+비-local 프로필이면 32바이트 미만으로 부팅 실패.
+    secret: ${ZOOMNEAR_JWT_SECRET:}
+    access-token-ttl-minutes: 30
+    refresh-token-ttl-days: 14
+  fcm:
+    enabled: false
+  invite:
+    base-url: https://zoomnear.kr/invite

@@ -1,0 +1,30 @@
+# =====================================================================
+# ZOOM NEAR — Render Infrastructure as Code
+# https://render.com/docs/blueprint-spec
+#
+# Render 의 "New → Blueprint" 에서 이 레포 연결 후 자동 인식.
+# Supabase 자격증명 / JWT secret / CORS 는 Render 대시보드에서 환경변수로 입력.
+# =====================================================================
+
+services:
+  - type: web
+    name: zoomnear-api
+    runtime: docker
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    plan: free
+    region: singapore
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: supabase
+      - key: SPRING_DATASOURCE_URL
+        sync: false
+      - key: SPRING_DATASOURCE_USERNAME
+        sync: false
+      - key: SPRING_DATASOURCE_PASSWORD
+        sync: false
+      - key: ZOOMNEAR_JWT_SECRET
+        generateValue: true
+      - key: ZOOMNEAR_CORS_ALLOWED_ORIGINS
+        sync: false
