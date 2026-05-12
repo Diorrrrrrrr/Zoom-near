@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { login } from "@/lib/api/auth";
 import { saveSession } from "@/lib/auth/session";
 import { saveUserSession } from "@/lib/auth/user-session";
 
-export default function LoginPage() {
+/// useSearchParams 사용 컴포넌트는 정적 prerender 가 막혀 Suspense 안에서만 호출.
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -156,5 +157,19 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
+          <p className="text-base text-gray-400">불러오는 중…</p>
+        </main>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

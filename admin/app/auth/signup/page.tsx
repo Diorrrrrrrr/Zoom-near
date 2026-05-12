@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { post } from "@/lib/api/client";
@@ -20,7 +20,8 @@ const ROLE_INFO: Record<Role, { label: string; desc: string }> = {
   },
 };
 
-export default function SignupPage() {
+/// useSearchParams 가 정적 prerender 를 막기 때문에 Suspense 경계 안에서만 사용한다.
+function SignupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const inviteToken = searchParams.get("inviteToken") ?? "";
@@ -251,5 +252,19 @@ export default function SignupPage() {
         </p>
       </div>
     </main>
+  );
+}
+
+export default function SignupPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-6">
+          <p className="text-base text-gray-400">불러오는 중…</p>
+        </main>
+      }
+    >
+      <SignupForm />
+    </Suspense>
   );
 }
