@@ -73,11 +73,15 @@ public class EventFacade {
     public SocialEvent create(UUID creatorId, CreateEventRequest req) {
         User creator = userRepository.findById(creatorId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
-        if (creator.getRole() != Role.TUNTUN && creator.getRole() != Role.MANAGER) {
+        if (creator.getRole() != Role.TUNTUN
+                && creator.getRole() != Role.MANAGER
+                && creator.getRole() != Role.ADMIN) {
             throw new BusinessException(ErrorCode.FORBIDDEN, "이벤트 생성 권한이 없습니다.");
         }
-        if (req.managerProgram() && creator.getRole() != Role.MANAGER) {
-            throw new BusinessException(ErrorCode.FORBIDDEN, "매니저 프로그램은 MANAGER만 생성할 수 있습니다.");
+        if (req.managerProgram()
+                && creator.getRole() != Role.MANAGER
+                && creator.getRole() != Role.ADMIN) {
+            throw new BusinessException(ErrorCode.FORBIDDEN, "매니저 프로그램은 MANAGER/ADMIN만 생성할 수 있습니다.");
         }
         if (!req.endsAt().isAfter(req.startsAt())) {
             throw new BusinessException(ErrorCode.VALIDATION_FAILED, "종료 시각은 시작 시각보다 이후여야 합니다.");

@@ -10,6 +10,8 @@ import {
   useForceCloseEvent,
   useAdminUpdateEvent,
   useAdminDeleteEvent,
+  useAdminCreateEvent,
+  type AdminCreateEventInput,
 } from "@/lib/api/events";
 import type { SocialEvent } from "@/lib/types";
 import type { UpdateEventRequest } from "@/lib/api/user-events";
@@ -239,11 +241,194 @@ function EditModal({ event, onClose, onSave, isPending }: EditModalProps) {
   );
 }
 
+interface CreateForm {
+  title: string;
+  description: string;
+  regionText: string;
+  category: string;
+  startsAt: string;
+  endsAt: string;
+  capacity: string;
+  pointCost: string;
+}
+
+interface CreateModalProps {
+  onClose: () => void;
+  onSave: (form: CreateForm) => void;
+  isPending: boolean;
+}
+
+/// 어드민/매니저 이벤트 생성 모달. managerProgram=true 로 저장 (주니어 자체 프로그램).
+function CreateEventModal({ onClose, onSave, isPending }: CreateModalProps) {
+  const [form, setForm] = useState<CreateForm>({
+    title: "",
+    description: "",
+    regionText: "",
+    category: CATEGORIES[0],
+    startsAt: "",
+    endsAt: "",
+    capacity: "10",
+    pointCost: "0",
+  });
+  const [err, setErr] = useState<string | null>(null);
+
+  function setField<K extends keyof CreateForm>(k: K, v: CreateForm[K]) {
+    setForm((p) => ({ ...p, [k]: v }));
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.title.trim() || !form.description.trim() || !form.regionText.trim()) {
+      setErr("제목 / 설명 / 지역을 모두 입력해 주세요.");
+      return;
+    }
+    if (!form.startsAt || !form.endsAt) {
+      setErr("시작·종료 일시를 입력해 주세요.");
+      return;
+    }
+    if (new Date(form.endsAt) <= new Date(form.startsAt)) {
+      setErr("종료 일시는 시작 일시보다 이후여야 합니다.");
+      return;
+    }
+    if (new Date(form.startsAt) <= new Date()) {
+      setErr("시작 일시는 현재 이후여야 합니다.");
+      return;
+    }
+    setErr(null);
+    onSave(form);
+  }
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="이벤트 생성"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+    >
+      <div className="absolute inset-0 bg-black/40" onClick={onClose} aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-8 shadow-xl overflow-y-auto max-h-[90vh]">
+        <h2 className="mb-1 text-xl font-bold text-gray-900">이벤트 생성</h2>
+        <p className="mb-4 text-sm text-emerald-700">
+          주니어 자체 프로그램으로 등록됩니다 — 사용자 목록에서 녹색 뱃지로 표시돼요.
+        </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">제목 *</label>
+            <input
+              value={form.title}
+              onChange={(e) => setField("title", e.target.value)}
+              placeholder="예: 토요 산책 모임"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-medium text-gray-700">설명 *</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setField("description", e.target.value)}
+              rows={3}
+              placeholder="이벤트 상세 내용"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">지역 *</label>
+              <input
+                value={form.regionText}
+                onChange={(e) => setField("regionText", e.target.value)}
+                placeholder="예: 서울 강남구"
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">카테고리</label>
+              <select
+                value={form.category}
+                onChange={(e) => setField("category", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">시작 일시 *</label>
+              <input
+                type="datetime-local"
+                value={form.startsAt}
+                onChange={(e) => setField("startsAt", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">종료 일시 *</label>
+              <input
+                type="datetime-local"
+                value={form.endsAt}
+                onChange={(e) => setField("endsAt", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">정원</label>
+              <input
+                type="number"
+                min="1"
+                value={form.capacity}
+                onChange={(e) => setField("capacity", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-medium text-gray-700">참여 포인트</label>
+              <input
+                type="number"
+                min="0"
+                value={form.pointCost}
+                onChange={(e) => setField("pointCost", e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-base focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+              />
+            </div>
+          </div>
+          {err && (
+            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {err}
+            </div>
+          )}
+          <div className="mt-6 flex justify-end gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-base font-medium text-gray-700 hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-lg bg-emerald-600 px-5 py-2.5 text-base font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isPending ? "생성 중…" : "생성하기"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function EventsPage() {
   const { toast } = useToast();
 
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(0);
+  const [createOpen, setCreateOpen] = useState(false);
   const [closeTarget, setCloseTarget] = useState<SocialEvent | null>(null);
   const [editTarget, setEditTarget] = useState<SocialEvent | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SocialEvent | null>(null);
@@ -257,6 +442,28 @@ export default function EventsPage() {
   const forceClose = useForceCloseEvent();
   const adminUpdate = useAdminUpdateEvent();
   const adminDelete = useAdminDeleteEvent();
+  const adminCreate = useAdminCreateEvent();
+
+  async function handleCreate(form: CreateForm) {
+    try {
+      const input: AdminCreateEventInput = {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        regionText: form.regionText.trim(),
+        category: form.category,
+        startsAt: new Date(form.startsAt).toISOString(),
+        endsAt: new Date(form.endsAt).toISOString(),
+        capacity: Math.max(1, Number(form.capacity) || 1),
+        pointCost: Math.max(0, Number(form.pointCost) || 0),
+      };
+      await adminCreate.mutateAsync(input);
+      toast(`이벤트 "${input.title}" 를 생성했습니다.`, "success");
+      setCreateOpen(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "생성 중 오류";
+      toast(`생성 실패: ${msg}`, "error");
+    }
+  }
 
   async function handleForceClose(reason: string) {
     if (!closeTarget) return;
@@ -416,7 +623,16 @@ export default function EventsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">이벤트 관리</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">이벤트 관리</h1>
+        <button
+          type="button"
+          onClick={() => setCreateOpen(true)}
+          className="rounded-lg bg-emerald-600 px-4 py-2 text-base font-semibold text-white hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+        >
+          + 이벤트 생성
+        </button>
+      </div>
 
       {/* 필터 */}
       <div className="mb-4 flex flex-wrap items-end gap-3">
@@ -488,6 +704,15 @@ export default function EventsPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* 생성 모달 */}
+      {createOpen && (
+        <CreateEventModal
+          onClose={() => setCreateOpen(false)}
+          onSave={handleCreate}
+          isPending={adminCreate.isPending}
+        />
+      )}
 
       {/* 수정 모달 */}
       {editTarget && (

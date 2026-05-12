@@ -24,6 +24,29 @@ export function useEvents(params: EventsParams = {}) {
   });
 }
 
+export interface AdminCreateEventInput {
+  title: string;
+  description: string;
+  regionText: string;
+  category: string;
+  startsAt: string;
+  endsAt: string;
+  capacity: number;
+  pointCost: number;
+}
+
+/// 관리자/매니저 이벤트 생성. managerProgram=true 강제 (주니어 자체 프로그램).
+export function useAdminCreateEvent() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: AdminCreateEventInput) =>
+      post<SocialEvent>("/api/v1/events", { ...input, managerProgram: true }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["events"] });
+    },
+  });
+}
+
 export function useForceCloseEvent() {
   const queryClient = useQueryClient();
   return useMutation({
