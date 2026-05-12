@@ -66,9 +66,20 @@ public class GlobalExceptionHandler {
             Exception ex, HttpServletRequest req) {
         log.error("Unhandled exception at {} {}",
                 req.getMethod(), req.getRequestURI(), ex);
+        // TEMP DEBUG: expose exception class+message+rootCause to response details
+        // TODO: revert after 500 diagnosis on POST /api/v1/events
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        Map<String, Object> details = new LinkedHashMap<>();
+        details.put("exception", ex.getClass().getName());
+        details.put("message", ex.getMessage());
+        details.put("rootException", root.getClass().getName());
+        details.put("rootMessage", root.getMessage());
         return ResponseEntity.status(ErrorCode.INTERNAL.getStatus())
                 .body(body(ErrorCode.INTERNAL.name(),
-                        ErrorCode.INTERNAL.getDefaultMessage(), Map.of()));
+                        ErrorCode.INTERNAL.getDefaultMessage(), details));
     }
 
     private Map<String, Object> body(String code, String message, Map<String, ?> details) {
